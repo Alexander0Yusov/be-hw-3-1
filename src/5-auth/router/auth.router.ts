@@ -15,6 +15,7 @@ import { passwordDtoValidationMiddleware } from '../validation/password-dto-vali
 import { userDtoValidationMiddleware } from '../../4-users/validation/user-dto-validation.middleware';
 import { confirmationCodeDtoValidationMiddleware } from '../validation/confirmation-code-dto-validation.middleware';
 import { emailDtoValidationMiddleware } from '../validation/email-dto-validation.middleware';
+import { logAndRateLimitMiddleware } from '../../core/middlewares/log-and-limit/log-and-rate-limit.middleware';
 
 export const authRouter = Router({});
 
@@ -22,17 +23,25 @@ authRouter.post(
   '/login',
   loginOrEmailDtoValidationMiddleware,
   passwordDtoValidationMiddleware,
+  logAndRateLimitMiddleware,
   errorsCatchMiddleware,
   postAuthLoginHandler,
 );
 
 authRouter.get('/me', accessTokenGuard, getAuthMeHandler);
 
-authRouter.post('/registration', userDtoValidationMiddleware, errorsCatchMiddleware, postAuthRegistrationHandler);
+authRouter.post(
+  '/registration',
+  userDtoValidationMiddleware,
+  logAndRateLimitMiddleware,
+  errorsCatchMiddleware,
+  postAuthRegistrationHandler,
+);
 
 authRouter.post(
   '/registration-confirmation',
   confirmationCodeDtoValidationMiddleware,
+  logAndRateLimitMiddleware,
   errorsCatchMiddleware,
   postAuthRegistrationConfirmationHandler,
 );
@@ -40,6 +49,7 @@ authRouter.post(
 authRouter.post(
   '/registration-email-resending',
   emailDtoValidationMiddleware,
+  logAndRateLimitMiddleware,
   errorsCatchMiddleware,
   postAuthRegistrationEmailResendingHandler,
 );

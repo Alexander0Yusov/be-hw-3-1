@@ -6,13 +6,17 @@ import { db } from './db/mongo.db';
 const bootstrap = async () => {
   const app = express();
 
-  app.set('trust proxy', true); // для получения корректного айпи
+  // для получения корректного айпи
+  app.set('trust proxy', true);
 
   setupApp(app);
 
   const PORT = SETTINGS.PORT;
 
   await db.run(SETTINGS.MONGO_URL);
+
+  // для чистки логов автоматически
+  await db.getCollections().requestlogCollection.createIndex({ date: 1 }, { expireAfterSeconds: 60 });
 
   app.listen(PORT, () => {
     console.log(`Example app listening on port ${PORT}`);

@@ -1,5 +1,5 @@
 export type RequestLog = {
-  IP: string;
-  URL: string;
+  ip: string;
+  url: string;
   date: Date;
 };
