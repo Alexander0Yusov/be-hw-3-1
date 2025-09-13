@@ -4,8 +4,13 @@ import { AuthInputModel } from '../../types/auth-iput-model';
 import { authService } from '../../domain/auth.service';
 import { ResultStatus } from '../../../core/result/resultCode';
 import { resultCodeToHttpException } from '../../../core/result/resultCodeToHttpException';
+import { sessionsService } from '../../../7-security/application/sessions.service';
 
-export async function postAuthHandler(req: Request<{}, {}, AuthInputModel>, res: Response) {
+export async function postAuthLoginHandler(req: Request<{}, {}, AuthInputModel>, res: Response) {
+  const ip = req.ip;
+
+  const device_name = req.get('user-agent') || 'Unknown device';
+
   const { loginOrEmail, password } = req.body;
 
   const result = await authService.loginUser(loginOrEmail, password);
@@ -13,6 +18,8 @@ export async function postAuthHandler(req: Request<{}, {}, AuthInputModel>, res:
   if (result.status !== ResultStatus.Success) {
     return res.status(resultCodeToHttpException(result.status)).send(result.extensions);
   }
+
+  await sessionsService.createSession(result.data!.refreshToken, ip!, device_name);
 
   res.cookie('refreshToken', result.data!.refreshToken, { httpOnly: true, secure: true });
 

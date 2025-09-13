@@ -11,6 +11,7 @@ import { User } from '../../4-users/types/user';
 import { usersService } from '../../4-users/application/users.service';
 import { nodemailerService } from '../adapters/nodemailer.service';
 import { emailExamples } from '../adapters/email-examples';
+import { SETTINGS } from '../../core/settings/settings';
 
 export const authService = {
   async loginUser(
@@ -27,13 +28,15 @@ export const authService = {
         data: null,
       };
 
+    const deviceId = uuidv4();
+
     const accessToken = await jwtService.createAccessToken(result.data!._id.toString());
-    const refreshToken = await jwtService.createRefreshToken(result.data!._id.toString());
+    const refreshToken = await jwtService.createRefreshToken(result.data!._id.toString(), deviceId);
 
     const refreshTokenData = {
       value: refreshToken,
       createdAt: new Date(),
-      expiresAt: addSeconds(new Date(), 20),
+      expiresAt: addSeconds(new Date(), Number(SETTINGS.REFRESH_TIME)),
       isRevoked: false,
     };
 
@@ -214,14 +217,28 @@ export const authService = {
     // меняем статус рефреш токена на негодный
     await usersRepository.setStatusIsRevokedForRefreshToken(refreshToken);
 
-    // генерим новый и укладываем в базу
-    const newRefreshToken = await jwtService.createRefreshToken(user._id.toString());
-    const newAccessToken = await jwtService.createAccessToken(user._id.toString());
+    // находим сессию и берем девайс айди
+    const decodedRefreshToken = jwtService.decodeToken(refreshToken) as unknown as {
+      userId: string;
+      deviceId: string;
+    };
+
+    // генерим новые и укладываем в базу только рефреш токен
+    const newAccessToken = await jwtService.createAccessToken(decodedRefreshToken.userId);
+    const newRefreshToken = await jwtService.createRefreshToken(
+      decodedRefreshToken.userId,
+      decodedRefreshToken.deviceId,
+    );
+
+    const decodedNewRefreshToken = jwtService.decodeToken(newRefreshToken) as unknown as {
+      iat: number;
+      exp: number;
+    };
 
     const refreshTokenData = {
       value: newRefreshToken,
-      createdAt: new Date(),
-      expiresAt: addSeconds(new Date(), 20),
+      createdAt: new Date(decodedNewRefreshToken.iat * 1000),
+      expiresAt: addSeconds(new Date(decodedNewRefreshToken.exp * 1000), Number(SETTINGS.REFRESH_TIME)),
       isRevoked: false,
     };
 

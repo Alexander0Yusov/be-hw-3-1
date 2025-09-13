@@ -8,8 +8,10 @@ export const jwtService = {
     });
   },
 
-  async createRefreshToken(userId: string): Promise<string> {
-    return jwt.sign({ userId }, SETTINGS.REFRESH_SECRET, {
+  async createRefreshToken(userId: string, deviceId: string): Promise<string> {
+    const iat = Math.floor(Date.now() / 1000); // секунды
+
+    return jwt.sign({ userId, deviceId, iat }, SETTINGS.REFRESH_SECRET, {
       expiresIn: Number(SETTINGS.REFRESH_TIME) || '7d',
     });
   },
@@ -40,9 +42,9 @@ export const jwtService = {
     }
   },
 
-  async verifyRefreshToken(token: string): Promise<{ userId: string } | null> {
+  async verifyRefreshToken(token: string): Promise<{ userId: string; deviceId: string; iat: number } | null> {
     try {
-      return jwt.verify(token, SETTINGS.REFRESH_SECRET) as { userId: string };
+      return jwt.verify(token, SETTINGS.REFRESH_SECRET) as { userId: string; deviceId: string; iat: number };
     } catch (error) {
       console.error('Refresh token verification failed');
       return null;

@@ -13,6 +13,7 @@ export const paths = {
     login: '/auth/login',
     register: '/auth/register',
   },
+  security: '/security',
   blogs: '/blogs',
   posts: '/posts',
   users: '/users',

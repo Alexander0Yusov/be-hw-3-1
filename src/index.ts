@@ -6,6 +6,8 @@ import { db } from './db/mongo.db';
 const bootstrap = async () => {
   const app = express();
 
+  app.set('trust proxy', true); // для получения корректного айпи
+
   setupApp(app);
 
   const PORT = SETTINGS.PORT;

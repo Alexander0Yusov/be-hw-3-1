@@ -3,7 +3,7 @@ import { errorsCatchMiddleware } from '../../core/middlewares/validation/errors-
 import { accessTokenGuard } from './guards/access.token.guard';
 import {
   getAuthMeHandler,
-  postAuthHandler,
+  postAuthLoginHandler,
   postAuthLogoutHandler,
   postAuthRefreshTokenHandler,
   postAuthRegistrationConfirmationHandler,
@@ -23,7 +23,7 @@ authRouter.post(
   loginOrEmailDtoValidationMiddleware,
   passwordDtoValidationMiddleware,
   errorsCatchMiddleware,
-  postAuthHandler,
+  postAuthLoginHandler,
 );
 
 authRouter.get('/me', accessTokenGuard, getAuthMeHandler);

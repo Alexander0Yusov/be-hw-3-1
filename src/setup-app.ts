@@ -8,6 +8,7 @@ import { usersRouter } from './4-users/router/users.router';
 import { setupSwagger } from './core/swagger/setup-swagger';
 import { authRouter } from './5-auth/router/auth.router';
 import { commentsRouter } from './6-comments/router/comments.router';
+import { securityRouter } from './7-security/router/security.router';
 import cookieParser from 'cookie-parser';
 
 export const setupApp = (app: Express) => {
@@ -24,6 +25,7 @@ export const setupApp = (app: Express) => {
   app.use(USERS_PATH, usersRouter);
   app.use(AUTH_PATH, authRouter);
   app.use(paths.comments, commentsRouter);
+  app.use(paths.security, securityRouter);
   app.use(TESTING_PATH, testRouter);
 
   setupSwagger(app);

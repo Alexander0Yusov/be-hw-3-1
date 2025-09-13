@@ -5,6 +5,7 @@ import { Blog } from '../1-blogs/types/blog';
 import { Post } from '../2-posts/types/post';
 import { User } from '../4-users/types/user';
 import { Comment } from '../6-comments/types/comment';
+import { DeviceSession } from '../7-security/types/device-session';
 
 // export let client: MongoClient;
 // export let blogCollection: Collection<Blog>;
@@ -87,6 +88,7 @@ export const db = {
       blogCollection: this.getDbName().collection<Blog>('blogs'),
       postCollection: this.getDbName().collection<Post>('posts'),
       commentCollection: this.getDbName().collection<Comment>('comments'),
+      sessionCollection: this.getDbName().collection<DeviceSession>('sessions'),
     };
   },
 };
