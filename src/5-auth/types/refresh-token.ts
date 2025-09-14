@@ -3,4 +3,5 @@ export type RefreshTokenData = {
   createdAt: Date;
   expiresAt: Date;
   isRevoked: boolean;
+  deviceId?: string;
 };

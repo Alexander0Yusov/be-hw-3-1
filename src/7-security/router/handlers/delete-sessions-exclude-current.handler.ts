@@ -15,9 +15,12 @@ export async function deleteSessionsExcludeCurrentHandler(req: Request, res: Res
 
     const refreshToken = req.cookies.refreshToken;
 
-    await sessionsService.deleteAllExceptCurrent(refreshToken);
+    if (await sessionsService.deleteAllExceptCurrent(refreshToken)) {
+      res.sendStatus(HttpStatus.NoContent);
+      return;
+    }
 
-    res.status(HttpStatus.NoContent);
+    res.sendStatus(HttpStatus.Forbidden);
   } catch (error: unknown) {
     res.sendStatus(HttpStatus.InternalServerError);
   }

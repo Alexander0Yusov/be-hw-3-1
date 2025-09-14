@@ -98,4 +98,11 @@ export const usersRepository = {
 
     return res.acknowledged;
   },
+
+  //
+  async findByDeviceId(deviceId: string): Promise<WithId<User> | null> {
+    const user = await db.getCollections().userCollection.findOne({ 'refreshTokens.deviceId': deviceId });
+
+    return user;
+  },
 };

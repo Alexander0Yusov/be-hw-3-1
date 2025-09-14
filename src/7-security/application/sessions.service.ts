@@ -46,29 +46,22 @@ export const sessionsService = {
     );
   },
 
-  async deleteAllExceptCurrent(refreshToken: string): Promise<void> {
+  async deleteAllExceptCurrent(refreshToken: string): Promise<boolean> {
     const decoded = (await jwtService.decodeToken(refreshToken)) as unknown as {
       userId: string;
       deviceId: string;
       iat: number;
     };
 
-    await sessionsRepository.deleteManyExceptCurrent(decoded.userId, decoded.deviceId, new Date(decoded.iat * 1000));
-
-    return;
+    return await sessionsRepository.deleteManyExceptCurrent(decoded.userId, decoded.deviceId);
   },
 
-  async deleteOne(refreshToken: string) {
-    const decoded = (await jwtService.decodeToken(refreshToken)) as unknown as {
-      userId: string;
-      deviceId: string;
-    };
-
-    return await sessionsRepository.deleteByDeviceIdAndUserId(decoded.deviceId, decoded.userId);
+  async deleteOne(deviceId: string, userId: string) {
+    return await sessionsRepository.deleteByDeviceIdAndUserId(deviceId, userId);
   },
 
-  async findById(id: string) {
-    return await sessionsRepository.findById(id);
+  async findById(deviceId: string) {
+    return await sessionsRepository.findById(deviceId);
   },
 };
 

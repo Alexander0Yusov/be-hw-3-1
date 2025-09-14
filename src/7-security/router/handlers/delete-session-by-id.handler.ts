@@ -3,6 +3,7 @@ import { usersQwRepository } from '../../../4-users/qw-repository/users-qw-repos
 import { HttpStatus } from '../../../core/types/HttpStatus';
 import { createErrorMessages } from '../../../core/utils/error.utils';
 import { sessionsService } from '../../application/sessions.service';
+import { authService } from '../../../5-auth/domain/auth.service';
 
 export async function deleteSessionByIdHandler(req: Request, res: Response) {
   try {
@@ -25,11 +26,13 @@ export async function deleteSessionByIdHandler(req: Request, res: Response) {
       return;
     }
 
-    const refreshToken = req.cookies.refreshToken;
+    await sessionsService.deleteOne(session.deviceId, session.userId);
 
-    await sessionsService.deleteOne(refreshToken);
+    // отозвать токен
+    await authService.logoutDeviceById(session.deviceId);
 
-    res.status(HttpStatus.NoContent);
+    res.sendStatus(HttpStatus.NoContent);
+    return;
   } catch (error: unknown) {
     res.sendStatus(HttpStatus.InternalServerError);
   }

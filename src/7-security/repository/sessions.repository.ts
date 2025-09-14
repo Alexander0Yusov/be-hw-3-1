@@ -27,17 +27,17 @@ export const sessionsRepository = {
     return;
   },
 
-  async deleteManyExceptCurrent(userId: string, deviceId: string, lastActiveDate: Date): Promise<void> {
+  async deleteManyExceptCurrent(userId: string, deviceId: string): Promise<boolean> {
     const deleteResult = await db.getCollections().sessionCollection.deleteMany({
       userId,
-      $nor: [{ deviceId, lastActiveDate }],
+      deviceId: { $ne: deviceId },
     });
 
     if (deleteResult.deletedCount < 1) {
-      throw new Error('Session not exist');
+      return false;
     }
 
-    return;
+    return true;
   },
 
   async deleteByDeviceIdAndUserId(deviceId: string, userId: string): Promise<boolean> {
@@ -49,7 +49,7 @@ export const sessionsRepository = {
     return deleteResult.acknowledged;
   },
 
-  async findById(id: string): Promise<WithId<DeviceSession> | null> {
-    return await db.getCollections().sessionCollection.findOne({ _id: new ObjectId(id) });
+  async findById(deviceId: string): Promise<WithId<DeviceSession> | null> {
+    return await db.getCollections().sessionCollection.findOne({ deviceId });
   },
 };

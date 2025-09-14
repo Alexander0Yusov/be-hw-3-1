@@ -3,6 +3,8 @@ import { accessTokenGuard } from '../../5-auth/router/guards/access.token.guard'
 import { getActiveSessionsHandler } from './handlers/get-active-sessions.handler';
 import { deleteSessionsExcludeCurrentHandler } from './handlers/delete-sessions-exclude-current.handler';
 import { deleteSessionByIdHandler } from './handlers/delete-session-by-id.handler';
+import { deviceIdValidationMiddleware } from '../validation/id-validation.middleware';
+import { errorsCatchMiddleware } from '../../core/middlewares/validation/errors-catch.middleware';
 
 export const securityRouter = Router({});
 
@@ -10,7 +12,13 @@ securityRouter.get('/devices', accessTokenGuard, getActiveSessionsHandler);
 
 securityRouter.delete('/devices', accessTokenGuard, deleteSessionsExcludeCurrentHandler);
 
-securityRouter.delete('/devices/:deviceId', accessTokenGuard, deleteSessionByIdHandler);
+securityRouter.delete(
+  '/devices/:deviceId',
+  accessTokenGuard,
+  deviceIdValidationMiddleware,
+  errorsCatchMiddleware,
+  deleteSessionByIdHandler,
+);
 
 // мидлвара обработки всех маршрутов, считая переходы -- IP:string, URL:string, date:Date --  req.baseUrl или req.originalUrl;
 

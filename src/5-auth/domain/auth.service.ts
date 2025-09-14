@@ -12,6 +12,7 @@ import { usersService } from '../../4-users/application/users.service';
 import { nodemailerService } from '../adapters/nodemailer.service';
 import { emailExamples } from '../adapters/email-examples';
 import { SETTINGS } from '../../core/settings/settings';
+import { sessionsService } from '../../7-security/application/sessions.service';
 
 export const authService = {
   async loginUser(
@@ -20,15 +21,14 @@ export const authService = {
   ): Promise<Result<{ accessToken: string; refreshToken: string } | null>> {
     const result = await this.checkUserCredentials(loginOrEmail, password);
 
-    if (result.status !== ResultStatus.Success)
+    if (result.status !== ResultStatus.Success) {
       return {
         status: ResultStatus.Unauthorized,
         errorMessage: 'Unauthorized',
         extensions: [{ field: 'loginOrEmail', message: 'Wrong credentials' }],
         data: null,
       };
-
-    console.log(2222, result.data);
+    }
 
     if (result.data) {
       const deviceId = uuidv4();
@@ -41,6 +41,7 @@ export const authService = {
         createdAt: new Date(),
         expiresAt: addSeconds(new Date(), Number(SETTINGS.REFRESH_TIME)),
         isRevoked: false,
+        deviceId,
       };
 
       await usersRepository.setRefreshTokenById(result.data!._id, refreshTokenData);
@@ -53,9 +54,10 @@ export const authService = {
     }
 
     return {
-      status: ResultStatus.Success,
+      status: ResultStatus.Unauthorized,
+      errorMessage: 'Unauthorized',
+      extensions: [{ field: 'loginOrEmail', message: 'Wrong credentials' }],
       data: null,
-      extensions: [],
     };
   },
 
@@ -264,8 +266,10 @@ export const authService = {
   async logoutUser(refreshToken: string): Promise<Result<true | null>> {
     const user = await usersRepository.findByRefreshToken(refreshToken);
 
+    const refreshTokenData = user!.refreshTokens.find((tokenData) => tokenData.value === refreshToken);
+
     // нет токена в базе или он отозван
-    if (!user || user.refreshTokens.find((tokenData) => tokenData.value === refreshToken)?.isRevoked === true) {
+    if (!user || refreshTokenData?.isRevoked === true) {
       return {
         status: ResultStatus.Unauthorized,
         errorMessage: 'Unauthorized',
@@ -286,6 +290,42 @@ export const authService = {
 
     // меняем статус рефреш токена на негодный
     await usersRepository.setStatusIsRevokedForRefreshToken(refreshToken);
+    await sessionsService.deleteOne(refreshTokenData?.deviceId || '', user._id.toString());
+
+    return {
+      status: ResultStatus.NoContent,
+      data: true,
+      extensions: [],
+    };
+  },
+
+  async logoutDeviceById(deviceId: string): Promise<Result<true | null>> {
+    const user = await usersRepository.findByDeviceId(deviceId);
+
+    const refreshTokenData = user!.refreshTokens.find((tokenData) => tokenData.deviceId === deviceId);
+
+    // нет токена в базе или он отозван
+    if (!user || refreshTokenData!.isRevoked === true) {
+      return {
+        status: ResultStatus.Unauthorized,
+        errorMessage: 'Unauthorized',
+        extensions: [{ field: 'refreshToken', message: 'Refresh token not found' }],
+        data: null,
+      };
+    }
+
+    // если протух
+    if (await jwtService.isTokenExpired(refreshTokenData!.value)) {
+      return {
+        status: ResultStatus.Unauthorized,
+        errorMessage: 'Unauthorized',
+        extensions: [{ field: 'refreshToken', message: 'Refresh token already been expired' }],
+        data: null,
+      };
+    }
+
+    // меняем статус рефреш токена на негодный
+    await usersRepository.setStatusIsRevokedForRefreshToken(refreshTokenData!.value);
 
     return {
       status: ResultStatus.NoContent,

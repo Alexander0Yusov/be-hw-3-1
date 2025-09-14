@@ -4,6 +4,7 @@ import { RequestWithUserId } from '../../../core/types/requests';
 import { authService } from '../../domain/auth.service';
 import { ResultStatus } from '../../../core/result/resultCode';
 import { resultCodeToHttpException } from '../../../core/result/resultCodeToHttpException';
+import { sessionsService } from '../../../7-security/application/sessions.service';
 
 export async function postAuthLogoutHandler(req: RequestWithUserId<IdType>, res: Response) {
   const incomeRefreshToken = req.cookies.refreshToken;
