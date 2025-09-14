@@ -125,4 +125,54 @@ describe('Auth API', () => {
       }
     }
   });
+
+  it('should login user 4 times from different browsers; POST /auth/login', async () => {
+    const user = createFakeUser('q');
+
+    await request(app)
+      .post(USERS_PATH)
+      .set('Authorization', generateBasicAuthToken())
+      .send(user)
+      .expect(HttpStatus.Created);
+
+    const simulateClientLogin = async (email: string, password: string, userAgent: string, fakeIp: string) => {
+      const res = await request(app)
+        .post('/auth/login')
+        .set('User-Agent', userAgent)
+        .set('X-Forwarded-For', fakeIp)
+        .send({ loginOrEmail: email, password });
+
+      console.log(999, res.body);
+
+      if (res.status !== 200) {
+        return;
+      }
+
+      if (Array.isArray(res.headers['set-cookie'])) {
+        return {
+          accessToken: res.body.accessToken,
+          refreshToken: res.headers['set-cookie']
+            .find((c) => c.startsWith('refreshToken='))
+            ?.split(';')[0]
+            .split('=')[1],
+        };
+      }
+
+      return;
+    };
+
+    // const session_1 = await simulateClientLogin(user.email, user.password, 'Chrome', '192.168.1.10');
+    const session_2 = await simulateClientLogin(user.email, user.password, 'Firefox', '192.168.1.11');
+    const session_3 = await simulateClientLogin(user.email, user.password, 'Safari', '192.168.1.12');
+    const session_4 = await simulateClientLogin(user.email, user.password, 'Edge', '192.168.1.13');
+
+    console.log(888, session_2, session_3, session_4);
+
+    const activeSessions = await request(app)
+      .get('/security/devices')
+      .set('Authorization', `Bearer ${session_2?.accessToken}`)
+      .expect(HttpStatus.Ok);
+
+    console.log(777, activeSessions.body);
+  });
 });

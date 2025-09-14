@@ -6,7 +6,7 @@ import { sessionsService } from '../../application/sessions.service';
 
 export async function deleteSessionByIdHandler(req: Request, res: Response) {
   try {
-    const session = await sessionsService.findById(req.params.id);
+    const session = await sessionsService.findById(req.params.deviceId);
 
     if (!session) {
       res.status(HttpStatus.NotFound).send(createErrorMessages([{ field: 'deviceId', message: 'Device not found' }]));

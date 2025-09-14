@@ -7,7 +7,7 @@ import { resultCodeToHttpException } from '../../../core/result/resultCodeToHttp
 import { sessionsService } from '../../../7-security/application/sessions.service';
 
 export async function postAuthLoginHandler(req: Request<{}, {}, AuthInputModel>, res: Response) {
-  const ip = req.ip;
+  const ip = req.ip; // || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
   const device_name = req.get('user-agent') || 'Unknown device';
 

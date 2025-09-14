@@ -28,23 +28,33 @@ export const authService = {
         data: null,
       };
 
-    const deviceId = uuidv4();
+    console.log(2222, result.data);
 
-    const accessToken = await jwtService.createAccessToken(result.data!._id.toString());
-    const refreshToken = await jwtService.createRefreshToken(result.data!._id.toString(), deviceId);
+    if (result.data) {
+      const deviceId = uuidv4();
 
-    const refreshTokenData = {
-      value: refreshToken,
-      createdAt: new Date(),
-      expiresAt: addSeconds(new Date(), Number(SETTINGS.REFRESH_TIME)),
-      isRevoked: false,
-    };
+      const accessToken = await jwtService.createAccessToken(result.data._id.toString());
+      const refreshToken = await jwtService.createRefreshToken(result.data._id.toString(), deviceId);
 
-    await usersRepository.setRefreshTokenById(result.data!._id, refreshTokenData);
+      const refreshTokenData = {
+        value: refreshToken,
+        createdAt: new Date(),
+        expiresAt: addSeconds(new Date(), Number(SETTINGS.REFRESH_TIME)),
+        isRevoked: false,
+      };
+
+      await usersRepository.setRefreshTokenById(result.data!._id, refreshTokenData);
+
+      return {
+        status: ResultStatus.Success,
+        data: { accessToken, refreshToken },
+        extensions: [],
+      };
+    }
 
     return {
       status: ResultStatus.Success,
-      data: { accessToken, refreshToken },
+      data: null,
       extensions: [],
     };
   },
@@ -218,7 +228,7 @@ export const authService = {
     await usersRepository.setStatusIsRevokedForRefreshToken(refreshToken);
 
     // находим сессию и берем девайс айди
-    const decodedRefreshToken = jwtService.decodeToken(refreshToken) as unknown as {
+    const decodedRefreshToken = (await jwtService.decodeToken(refreshToken)) as unknown as {
       userId: string;
       deviceId: string;
     };
@@ -230,7 +240,7 @@ export const authService = {
       decodedRefreshToken.deviceId,
     );
 
-    const decodedNewRefreshToken = jwtService.decodeToken(newRefreshToken) as unknown as {
+    const decodedNewRefreshToken = (await jwtService.decodeToken(newRefreshToken)) as unknown as {
       iat: number;
       exp: number;
     };

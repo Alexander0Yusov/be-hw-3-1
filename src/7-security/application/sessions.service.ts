@@ -4,12 +4,14 @@ import { sessionsRepository } from '../repository/sessions.repository';
 
 export const sessionsService = {
   async createSession(refreshToken: string, ip: string, deviceName: string): Promise<string> {
-    const decoded = jwtService.decodeToken(refreshToken) as unknown as {
+    const decoded = (await jwtService.decodeToken(refreshToken)) as unknown as {
       userId: string;
       deviceId: string;
       iat: number;
       exp: number;
     };
+
+    console.log(4545, decoded);
 
     const newSession: DeviceSession = {
       userId: decoded.userId,
@@ -20,16 +22,18 @@ export const sessionsService = {
       expiresAt: new Date(decoded.exp * 1000),
     };
 
+    console.log(44, newSession);
+
     return await sessionsRepository.create(newSession);
   },
 
   async update(incomeRefreshToken: string, newRefreshToken: string) {
-    const incomeDecodedToken = jwtService.decodeToken(incomeRefreshToken) as unknown as {
+    const incomeDecodedToken = (await jwtService.decodeToken(incomeRefreshToken)) as unknown as {
       deviceId: string;
       iat: number;
     };
 
-    const newDecodedToken = jwtService.decodeToken(newRefreshToken) as unknown as {
+    const newDecodedToken = (await jwtService.decodeToken(newRefreshToken)) as unknown as {
       iat: number;
       exp: number;
     };
@@ -43,7 +47,7 @@ export const sessionsService = {
   },
 
   async deleteAllExceptCurrent(refreshToken: string): Promise<void> {
-    const decoded = jwtService.decodeToken(refreshToken) as unknown as {
+    const decoded = (await jwtService.decodeToken(refreshToken)) as unknown as {
       userId: string;
       deviceId: string;
       iat: number;
@@ -55,7 +59,7 @@ export const sessionsService = {
   },
 
   async deleteOne(refreshToken: string) {
-    const decoded = jwtService.decodeToken(refreshToken) as unknown as {
+    const decoded = (await jwtService.decodeToken(refreshToken)) as unknown as {
       userId: string;
       deviceId: string;
     };

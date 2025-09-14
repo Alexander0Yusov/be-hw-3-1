@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { accessTokenGuard } from '../../5-auth/router/guards/access.token.guard';
 import { getActiveSessionsHandler } from './handlers/get-active-sessions.handler';
 import { deleteSessionsExcludeCurrentHandler } from './handlers/delete-sessions-exclude-current.handler';
+import { deleteSessionByIdHandler } from './handlers/delete-session-by-id.handler';
 
 export const securityRouter = Router({});
 
@@ -9,7 +10,7 @@ securityRouter.get('/devices', accessTokenGuard, getActiveSessionsHandler);
 
 securityRouter.delete('/devices', accessTokenGuard, deleteSessionsExcludeCurrentHandler);
 
-securityRouter.delete('/devices/:id', accessTokenGuard, getActiveSessionsHandler);
+securityRouter.delete('/devices/:deviceId', accessTokenGuard, deleteSessionByIdHandler);
 
 // мидлвара обработки всех маршрутов, считая переходы -- IP:string, URL:string, date:Date --  req.baseUrl или req.originalUrl;
 
