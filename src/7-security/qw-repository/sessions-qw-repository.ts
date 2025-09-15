@@ -52,7 +52,7 @@ export const sessionsQwRepository = {
     return items.map((item) => ({
       ip: item.ip,
       title: item.deviceName,
-      lastActiveDate: item.lastActiveDate.toString(),
+      lastActiveDate: item.lastActiveDate.toISOString(),
       deviceId: item.deviceId,
     }));
   },

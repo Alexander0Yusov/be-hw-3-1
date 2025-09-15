@@ -105,4 +105,17 @@ export const usersRepository = {
 
     return user;
   },
+
+  async setRefreshTokenArray(id: string, newRefreshTokens: RefreshTokenData[]): Promise<boolean> {
+    const res = await db.getCollections().userCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          refreshTokens: newRefreshTokens,
+        },
+      },
+    );
+
+    return res.acknowledged;
+  },
 };

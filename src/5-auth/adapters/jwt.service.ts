@@ -11,8 +11,6 @@ export const jwtService = {
   async createRefreshToken(userId: string, deviceId: string): Promise<string> {
     const iat = Math.floor(Date.now() / 1000); // секунды
 
-    console.log(123, userId, deviceId, iat);
-
     return jwt.sign({ userId, deviceId, iat }, SETTINGS.REFRESH_SECRET, {
       expiresIn: Number(SETTINGS.REFRESH_TIME) || '7d',
     });

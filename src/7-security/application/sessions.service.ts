@@ -1,6 +1,7 @@
 import { jwtService } from '../../5-auth/adapters/jwt.service';
 import { DeviceSession } from '../types/device-session';
 import { sessionsRepository } from '../repository/sessions.repository';
+import { usersRepository } from '../../4-users/repository/users.repository';
 
 export const sessionsService = {
   async createSession(refreshToken: string, ip: string, deviceName: string): Promise<string> {
@@ -11,8 +12,6 @@ export const sessionsService = {
       exp: number;
     };
 
-    console.log(4545, decoded);
-
     const newSession: DeviceSession = {
       userId: decoded.userId,
       deviceId: decoded.deviceId,
@@ -21,8 +20,6 @@ export const sessionsService = {
       lastActiveDate: new Date(decoded.iat * 1000),
       expiresAt: new Date(decoded.exp * 1000),
     };
-
-    console.log(44, newSession);
 
     return await sessionsRepository.create(newSession);
   },
@@ -46,14 +43,20 @@ export const sessionsService = {
     );
   },
 
-  async deleteAllExceptCurrent(refreshToken: string): Promise<boolean> {
-    const decoded = (await jwtService.decodeToken(refreshToken)) as unknown as {
-      userId: string;
-      deviceId: string;
-      iat: number;
-    };
+  async deleteAllExceptCurrent(userId: string, deviceId: string): Promise<boolean> {
+    const user = await usersRepository.findById(userId);
 
-    return await sessionsRepository.deleteManyExceptCurrent(decoded.userId, decoded.deviceId);
+    const newRefreshTokens = user!.refreshTokens.map((refreshTokenDataItem) => {
+      if (refreshTokenDataItem.deviceId !== deviceId) {
+        refreshTokenDataItem.isRevoked = true;
+      }
+
+      return refreshTokenDataItem;
+    });
+
+    await usersRepository.setRefreshTokenArray(userId, newRefreshTokens);
+
+    return await sessionsRepository.deleteManyExceptCurrent(userId, deviceId);
   },
 
   async deleteOne(deviceId: string, userId: string) {
@@ -64,40 +67,3 @@ export const sessionsService = {
     return await sessionsRepository.findById(deviceId);
   },
 };
-
-// export async function listUserDevices(userId: string) {
-//   const devices = await devicesSessions
-//     .find({ userId })
-//     .project({
-//       _id: 0,
-//       deviceId: 1,
-//       ip: 1,
-//       title: 1,
-//       lastActiveDate: 1,
-//     })
-//     .toArray();
-//   return devices;
-// }
-
-// export async function deleteOtherDevices(userId: string, keepDeviceId: string) {
-//   const res = await devicesSessions.deleteMany({
-//     userId,
-//     deviceId: { $ne: keepDeviceId },
-//   });
-//   return res.deletedCount ?? 0;
-// }
-
-// export async function deleteDeviceById(userId: string, deviceIdToDelete: string, currentDeviceId: string) {
-//   const target = await devicesSessions.findOne({ deviceId: deviceIdToDelete });
-//   if (!target) return { code: 404 as const };
-
-//   if (target.userId !== userId) return { code: 403 as const };
-
-//   if (target.deviceId === currentDeviceId) {
-//     // удаление текущего устройства через этот эндпоинт можно запретить или разрешить — на твой выбор
-//     // вернём 204 (разрешено) или 400/403 (запрещено). Используем 204.
-//   }
-
-//   await devicesSessions.deleteOne({ userId, deviceId: deviceIdToDelete });
-//   return { code: 204 as const };
-// }

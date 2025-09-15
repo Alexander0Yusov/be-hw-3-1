@@ -20,7 +20,7 @@ export const logAndRateLimitMiddleware = async (req: Request, res: Response, nex
 
   const recentCount = await logLimitRepository.countDocumentsFromIpToUrl(ip || '', url, tenSecondsAgo);
 
-  // console.log(`[${ip}] -> ${url} | Count in last 10s: ${recentCount}`);
+  console.log(`[${ip}] -> ${url} | Count in last 10s: ${recentCount}`);
   // ограничение
   if (recentCount > 5) {
     return res.status(429).send('Too many requests');
